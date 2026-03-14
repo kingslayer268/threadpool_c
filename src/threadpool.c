@@ -20,8 +20,10 @@ struct threadpool {
 	thread_t *threads;
 	tasks_t *queue; 
 	int thread_count;
+	int active_tasks;
 	thread_mutex lock;
 	thread_cond notify;
+	thread_cond all_done;
 	int shutdown;
 };
 void queue_init(tasks_t *queue) {
@@ -54,7 +56,7 @@ task_t* dequeue(tasks_t *queue) {
 
 void worker_func(void* args) {
 	threadpool_t* pool = (threadpool_t *) args;
-	while (!pool->shutdown) {
+	while (1) {
 		thread_mutex_lock(&pool->lock);	
 		while (pool->queue->size == 0 && !pool->shutdown) {
 			thread_cond_wait(&pool->notify, &pool->lock);
@@ -68,6 +70,12 @@ void worker_func(void* args) {
 		if (task) {
 			task->func(task->args);
 			free(task);
+			thread_mutex_lock(&pool->lock);
+			pool->active_tasks--;
+			if (pool->active_tasks == 0) {
+				thread_cond_signal(&pool->all_done);
+			}
+			thread_mutex_unlock(&pool->lock);
 		}
 	}
 }
@@ -77,6 +85,7 @@ threadpool_t* threadpool_create(int thread_count){
 	if (!pool) return NULL;
 	pool->shutdown = 0;
 	pool->thread_count = thread_count;
+	pool->active_tasks = 0;
 	pool->queue = malloc(sizeof(tasks_t));
 	if (!pool->queue) {free(pool); return NULL;}
 	queue_init(pool->queue);
@@ -84,7 +93,7 @@ threadpool_t* threadpool_create(int thread_count){
 	if (!pool->threads) {free(pool); return NULL;}
 	thread_mutex_init(&pool->lock);
 	thread_cond_init(&pool->notify);
-
+	thread_cond_init(&pool->all_done);
 	for (int i=0; i<thread_count; i++) {
 		int	re = thread_create(&pool->threads[i], worker_func, pool);
 		if (re == -1) {
@@ -111,10 +120,18 @@ int threadpool_submit(threadpool_t *pool, void (*func)(void *), void* args){
 		thread_mutex_unlock(&pool->lock);
 		return -1;
 	}
+	pool->active_tasks++;
 	enqueue(task, pool->queue);
 	thread_cond_signal(&pool->notify);
 	thread_mutex_unlock(&pool->lock);
 	return 0;
+}
+void threadpool_wait(threadpool_t *pool) {
+	thread_mutex_lock(&pool->lock);
+	while (pool->active_tasks > 0) {
+		thread_cond_wait(&pool->all_done, &pool->lock);
+	}
+	thread_mutex_unlock(&pool->lock);
 }
 
 void threadpool_destroy(threadpool_t *pool) {

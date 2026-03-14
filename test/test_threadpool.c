@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "threadpool.h"
 
-void work(void *arg)
+void heavy_task(void *arg)
 {
     int id = *(int*)arg;
 
-    printf("Task %d running\n", id);
+    printf("Task %d starting\n", id);
 
-#ifdef _WIN32
-    Sleep(500);
-#else
-    usleep(500000);
-#endif
+    volatile long sum = 0;
+    for (long i = 0; i < 100000000; i++)
+        sum += i;
 
     printf("Task %d finished\n", id);
 
@@ -23,30 +22,35 @@ int main()
 {
     threadpool_t *pool = threadpool_create(4);
 
-    if (!pool) {
-        printf("Failed to create threadpool\n");
-        return 1;
-    }
+    clock_t start = clock();
 
-    for (int i = 0; i < 20; i++) {
-
+    for (int i = 0; i < 8; i++)
+    {
         int *arg = malloc(sizeof(int));
         *arg = i;
 
-        threadpool_submit(pool, work, arg);
+        threadpool_submit(pool, heavy_task, arg);
     }
-
-    printf("Tasks submitted\n");
-
-#ifdef _WIN32
-    Sleep(5000);
-#else
-    sleep(5);
-#endif
+	threadpool_wait(pool);
 
     threadpool_destroy(pool);
 
-    printf("Threadpool destroyed\n");
+    clock_t end = clock();
 
-    return 0;
+    double time = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("Total time with threading: %.2f seconds\n", time);
+
+	start = clock();
+
+	for (int i=0; i<8; i++) {
+		int *arg = malloc(sizeof(int));
+		*arg = i;
+		heavy_task(arg);
+	}
+	end = clock();
+
+	time = (double)(end-start)/CLOCKS_PER_SEC;
+
+    printf("Total time without threading: %.2f seconds\n", time);
 }

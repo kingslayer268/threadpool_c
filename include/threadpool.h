@@ -7,4 +7,5 @@ int threadpool_submit(threadpool_t *pool,
 					  void (*func)(void *),
 					  void* args);
 void threadpool_destroy(threadpool_t *pool);
+void threadpool_wait(threadpool_t *pool);
 #endif
