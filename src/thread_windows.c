@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 typedef struct thread_args_t {
-	(*func)(void *);
+	void (*func)(void *);
 	void *args;
 } args_t;
 
@@ -14,10 +14,10 @@ DWORD WINAPI wrapper_func(LPVOID lpParam) {
 	return 0;
 }
 
-int create_thread(thread_t* thread, void(*func)(void*), void*args) {
+int thread_create(thread_t* thread, void(*func)(void*), void*args) {
 	args_t *wrapper = malloc(sizeof(args_t));
 	wrapper->func = func;
-	wraper->args = args;
+	wrapper->args = args;
 	*thread = CreateThread(NULL, 0, wrapper_func, wrapper, 0, NULL);
 	if (!*thread) {
 		free(wrapper);
@@ -58,10 +58,9 @@ void thread_cond_broadcast(thread_cond *cond) {
     WakeAllConditionVariable(cond);
 }
 
-
 void thread_join(thread_t *thread) {
-	WaitForSingleObject(*thread, INFINITE);
-	CloseHandle(*thread);
+	WaitForSingleObject(thread, INFINITE);
+	CloseHandle(thread);
 }
 
 void thread_cond_destroy(thread_cond *cond) {

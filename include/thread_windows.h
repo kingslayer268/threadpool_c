@@ -21,5 +21,7 @@ void thread_cond_init(thread_cond *cond);
 void thread_cond_wait(thread_cond *cond, thread_mutex *mutex);
 void thread_cond_signal(thread_cond *cond);
 void thread_cond_destroy(thread_cond *cond);
+void thread_cond_broadcast(thread_cond *cond);
+void thread_join(thread_t* thread);
 
 #endif

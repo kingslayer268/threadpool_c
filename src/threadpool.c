@@ -8,7 +8,7 @@
 typedef struct task {
 	void (*func)(void *);
 	void *args;
-	task_t *next;
+	struct task *next;
 } task_t;
 typedef struct task_queue {
 	task_t *head;
@@ -16,14 +16,14 @@ typedef struct task_queue {
 	size_t size;
 } tasks_t;
 
-typedef struct threadpool {
+struct threadpool {
 	thread_t *threads;
 	tasks_t *queue; 
 	int thread_count;
 	thread_mutex lock;
 	thread_cond notify;
 	int shutdown;
-} threadpool_t;
+};
 void queue_init(tasks_t *queue) {
 	queue->head = NULL;
 	queue->tail = NULL;
@@ -78,7 +78,7 @@ threadpool_t* threadpool_create(int thread_count){
 	pool->shutdown = 0;
 	pool->thread_count = thread_count;
 	pool->queue = malloc(sizeof(tasks_t));
-	if (!pool->queue) {free(pool), return NULL;}
+	if (!pool->queue) {free(pool); return NULL;}
 	queue_init(pool->queue);
 	pool->threads = malloc(sizeof(thread_t)*thread_count);
 	if (!pool->threads) {free(pool); return NULL;}
@@ -124,7 +124,7 @@ void threadpool_destroy(threadpool_t *pool) {
 	thread_mutex_unlock(&pool->lock);
 
 	for (int i=0; i<pool->thread_count; i++) {
-		thread_join(pool->threads[i]);
+		thread_join(&pool->threads[i]);
 	}
 	free(pool->threads);
 	while (pool->queue->size != 0) {
