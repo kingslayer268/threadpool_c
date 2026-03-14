@@ -5,6 +5,9 @@ project(threadpool)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Option to build tests
+option(THREADPOOL_BUILD_TESTS "Build threadpool tests" OFF)
+
 # Threadpool library
 add_library(threadpool
     src/threadpool.c
@@ -22,8 +25,8 @@ else()
 endif()
 
 # Test executable
-add_executable(test_threadpool
-    test/test_threadpool.c
-)
+if(THREADPOOL_BUILD_TESTS)
+	add_executable(test_threadpool test/test_threadpool.c)
 
-target_link_libraries(test_threadpool threadpool)
+	target_link_libraries(test_threadpool threadpool)
+endif()
