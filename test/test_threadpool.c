@@ -24,7 +24,7 @@ int main()
 
     clock_t start = clock();
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 40; i++)
     {
         int *arg = malloc(sizeof(int));
         *arg = i;
@@ -43,7 +43,7 @@ int main()
 
 	start = clock();
 
-	for (int i=0; i<8; i++) {
+	for (int i=0; i<40; i++) {
 		int *arg = malloc(sizeof(int));
 		*arg = i;
 		heavy_task(arg);

@@ -1,9 +1,5 @@
 #include "threadpool.h"
-#ifdef _WIN32
-#include "thread_windows.h"
-#else
-#include "thread_linux.h"
-#endif
+#include "thread_internals.h"
 
 typedef struct task {
 	void (*func)(void *);

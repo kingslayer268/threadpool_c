@@ -1,25 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(threadpool C)
+project(threadpool)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-
-# Prefer Ninja if available
-if(NOT CMAKE_GENERATOR)
-    find_program(NINJA_EXECUTABLE ninja)
-    if(NINJA_EXECUTABLE)
-        set(CMAKE_GENERATOR "Ninja" CACHE INTERNAL "" FORCE)
-    endif()
-endif()
-
-# Include headers
-include_directories(include)
 
 # Threadpool library
 add_library(threadpool
     src/threadpool.c
 )
+
+# Include headers
+target_include_directories(threadpool PUBLIC include)
 
 # Platform specific thread implementation
 if(WIN32)

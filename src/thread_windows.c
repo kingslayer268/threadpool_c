@@ -1,5 +1,6 @@
-#include "thread_windows.h"
+#include "thread_internals.h"
 #include <stdlib.h>
+#include <windows.h>
 
 typedef struct thread_args_t {
 	void (*func)(void *);
